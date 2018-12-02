@@ -24,7 +24,11 @@ def init():
         from apps.sparks.urls import sparks
         app.register_blueprint(sparks)
 
+        from apps.users.urls import users
+        app.register_blueprint(users)
+
 init()
+
 
 if __name__ =='__main__':
     manager.run()
