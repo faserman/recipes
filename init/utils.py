@@ -4,7 +4,6 @@ from flask import current_app
 from datetime import datetime
 
 
-
 def generate_jwt_token(user_id):
     iat = datetime.utcnow()
     return jwt.encode(
@@ -27,3 +26,9 @@ def make_password_hash(password):
             current_app.config['SECRET_KEY']
         ).encode('utf-8')
     ).hexdigest()
+
+
+def parse_json_to_object(obj, data_json):
+    fields = set(data_json.keys())
+    for field in fields:
+        setattr(obj, field, data_json[field])

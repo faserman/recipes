@@ -1,19 +1,25 @@
 from flask import request, jsonify
 from flask.views import MethodView
 from apps.users.models import User
-from init.utils import make_password_hash, generate_jwt_token
+from init.utils import generate_jwt_token, parse_json_to_object
 from init.database import db
+from apps.users.schemas import UserRegistrationSchema, UserSchema, UserNameUpdateSchema
+from flask_jwt import current_identity, jwt_required
+
 
 class UserView(MethodView):
+    @jwt_required()
     def get(self):
-        return 
+        result = UserSchema().dump(current_identity)
+        return jsonify(result.data)
 
     def post(self):
         json_data = request.get_json()
+        result = UserRegistrationSchema().load(json_data)
+        if result.errors:
+            return jsonify(result.errors), 403
         user = User()
-        user.email = json_data['email']
-        user.password = make_password_hash(json_data['password'])
-        user.name = json_data['name']
+        parse_json_to_object(user, result.data)
         db.session.add(user)
         db.session.commit()
         token = generate_jwt_token(user.id)
@@ -21,5 +27,15 @@ class UserView(MethodView):
             'token': token
         })
 
+    @jwt_required()
     def put(self):
-        return 
+        json_data = request.get_json()
+        result = UserNameUpdateSchema().load(json_data)
+        if result.errors:
+            return jsonify(result.errors), 403
+        user = User.query.get(current_identity.id)
+        parse_json_to_object(user, result.data)
+        db.session.add(user)
+        db.session.commit()
+        result = UserSchema().dump(user)
+        return jsonify(result.data)
